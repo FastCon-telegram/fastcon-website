@@ -154,7 +154,7 @@
         .loader-ring {
             width: 50px;
             height: 50px;
-            border: 2px solid rgba(255,255,255,0.1);
+            border: 2px solid var(--border);
             border-top-color: var(--accent-blue);
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -416,10 +416,16 @@
             cursor: default;
         }
         .feature-card:hover {
-            background: rgba(255,255,255,0.08);
             transform: translateY(-8px);
             border-color: var(--accent-blue);
+        }
+        [data-theme="dark"] .feature-card:hover {
+            background: rgba(255,255,255,0.08);
             box-shadow: 0 20px 40px -15px rgba(41, 151, 255, 0.3);
+        }
+        [data-theme="light"] .feature-card:hover {
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.15);
         }
         .feature-icon {
             font-size: 36px;
@@ -528,10 +534,17 @@
         .price-badge.tier-2 {
             background: linear-gradient(135deg, #2997ff, #5ac8fa);
         }
+        [data-theme="light"] .price-badge.tier-2 {
+            background: linear-gradient(135deg, #0066cc, #0088dd);
+        }
         /* Badge Tier 3 - 33% */
         .price-badge.tier-3 {
             background: linear-gradient(135deg, #ff9500, #ffcc00);
             animation: pulse-badge-orange 2s infinite;
+        }
+        [data-theme="light"] .price-badge.tier-3 {
+            background: linear-gradient(135deg, #d68f00, #e6a800);
+            animation: none;
         }
         @keyframes pulse-badge-orange {
             0%, 100% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.4); }
@@ -543,6 +556,10 @@
             animation: pulse-badge-green 2s infinite;
             font-size: 12px;
             padding: 5px 12px;
+        }
+        [data-theme="light"] .price-badge.tier-4 {
+            background: linear-gradient(135deg, #1e7e34, #28a745);
+            animation: none;
         }
         @keyframes pulse-badge-green {
             0%, 100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0.5); }
@@ -568,14 +585,26 @@
             color: var(--text-secondary);
             margin-top: 8px;
         }
-        .price-card.tier-2 .price-per-month {
+        /* Dark theme price per month colors */
+        [data-theme="dark"] .price-card.tier-2 .price-per-month {
             color: #5ac8fa;
         }
-        .price-card.tier-3 .price-per-month {
+        [data-theme="dark"] .price-card.tier-3 .price-per-month {
             color: #ffcc00;
         }
-        .price-card.tier-4 .price-per-month {
+        [data-theme="dark"] .price-card.tier-4 .price-per-month {
             color: #30d158;
+            font-weight: 600;
+        }
+        /* Light theme price per month colors */
+        [data-theme="light"] .price-card.tier-2 .price-per-month {
+            color: #0066cc;
+        }
+        [data-theme="light"] .price-card.tier-3 .price-per-month {
+            color: #b37400;
+        }
+        [data-theme="light"] .price-card.tier-4 .price-per-month {
+            color: #1e7e34;
             font-weight: 600;
         }
 
@@ -610,7 +639,15 @@
         }
         .ping-all-btn:hover {
             transform: scale(1.05);
+        }
+        [data-theme="dark"] .ping-all-btn:hover {
             box-shadow: 0 8px 24px rgba(41, 151, 255, 0.4);
+        }
+        [data-theme="light"] .ping-all-btn {
+            background: linear-gradient(135deg, #0066cc, #7b1fa2);
+        }
+        [data-theme="light"] .ping-all-btn:hover {
+            box-shadow: 0 8px 24px rgba(0, 102, 204, 0.3);
         }
         .ping-all-btn:disabled {
             opacity: 0.6;
@@ -698,6 +735,9 @@
             border-radius: 2px;
             background: rgba(255,255,255,0.15);
             transition: all 0.3s ease;
+        }
+        [data-theme="light"] .ping-bar {
+            background: rgba(0,0,0,0.1);
         }
         .ping-bar:nth-child(1) { height: 5px; }
         .ping-bar:nth-child(2) { height: 9px; }
@@ -803,7 +843,12 @@
         .cta-btn:hover {
             transform: translateY(-4px);
             border-color: var(--accent-blue);
+        }
+        [data-theme="dark"] .cta-btn:hover {
             box-shadow: 0 20px 40px -15px rgba(41, 151, 255, 0.4);
+        }
+        [data-theme="light"] .cta-btn:hover {
+            box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.2);
         }
         .cta-btn.primary {
             background: var(--accent-blue);
@@ -811,7 +856,17 @@
         }
         .cta-btn.primary:hover {
             background: #40a9ff;
+        }
+        [data-theme="dark"] .cta-btn.primary:hover {
             box-shadow: 0 20px 40px -10px rgba(41, 151, 255, 0.6);
+        }
+        [data-theme="light"] .cta-btn.primary {
+            background: #0066cc;
+            border-color: #0066cc;
+        }
+        [data-theme="light"] .cta-btn.primary:hover {
+            background: #0077dd;
+            box-shadow: 0 12px 32px -10px rgba(0, 102, 204, 0.4);
         }
         .cta-icon {
             font-size: 24px;
