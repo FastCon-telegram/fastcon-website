@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastCon — Админ-панель</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.1);
+            --text-primary: #f5f5f7;
+            --text-secondary: #86868b;
+            --accent-blue: #2997ff;
+            --accent-green: #30d158;
+            --accent-red: #ff453a;
+            --accent-yellow: #ffd60a;
+            --accent-purple: #bf5af2;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Login */
+        .login-screen {
+            position: fixed; inset: 0; background: var(--bg-primary);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .login-screen.hidden { opacity: 0; visibility: hidden; transition: all 0.5s; }
+        .login-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 40px; width: 100%; max-width: 380px; text-align: center;
+        }
+        .login-icon { font-size: 48px; margin-bottom: 20px; }
+        .login-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        .login-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+        .login-input {
+            width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border); border-radius: 12px;
+            color: var(--text-primary); font-size: 16px; margin-bottom: 16px; outline: none;
+        }
+        .login-input:focus { border-color: var(--accent-blue); }
+        .login-btn {
+            width: 100%; padding: 14px; background: var(--accent-blue);
+            border: none; border-radius: 12px; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer;
+        }
+        .login-btn:hover { background: #40a9ff; }
+        .login-error { color: var(--accent-red); font-size: 14px; margin-top: 12px; display: none; }
+
+        /* Dashboard */
+        .dashboard { display: none; padding: 30px 20px; max-width: 1100px; margin: 0 auto; }
+        .dashboard.visible { display: block; }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 16px; }
+        .header-title { font-size: 26px; font-weight: 700; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .btn {
+            padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s;
+        }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+        .btn-danger { background: rgba(255,69,58,0.2); color: var(--accent-red); }
+        .btn-danger:hover { background: rgba(255,69,58,0.3); }
+        .btn-primary { background: var(--accent-blue); color: #fff; }
+        .btn-primary:hover { background: #40a9ff; }
+        .btn-success { background: var(--accent-green); color: #000; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; text-transform: uppercase; }
+        .stat-value { font-size: 28px; font-weight: 700; }
+        .stat-value.blue { color: var(--accent-blue); }
+        .stat-value.green { color: var(--accent-green); }
+        .stat-value.purple { color: var(--accent-purple); }
+        .stat-value.yellow { color: var(--accent-yellow); }
+
+        /* Sections */
+        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+        .section-title { font-size: 16px; font-weight: 600; }
+
+        /* Chart */
+        .chart-container { height: 160px; display: flex; align-items: flex-end; gap: 6px; padding-top: 20px; }
+        .chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .chart-bar {
+            width: 100%; max-width: 35px;
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 4px 4px 0 0; position: relative; min-height: 4px;
+        }
+        .chart-bar-value { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 600; }
+        .chart-label { font-size: 9px; color: var(--text-secondary); }
+
+        /* Clicks */
+        .click-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .click-row:last-child { border-bottom: none; }
+        .click-name { display: flex; align-items: center; gap: 10px; }
+        .click-icon { font-size: 18px; }
+        .click-label { font-size: 14px; }
+        .click-count { font-size: 16px; font-weight: 600; color: var(--accent-blue); }
+
+        /* Items (servers, buttons) */
+        .item-row {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            background: rgba(255,255,255,0.02); border-radius: 10px; margin-bottom: 8px;
+        }
+        .item-row:hover { background: rgba(255,255,255,0.04); }
+        .item-drag { color: var(--text-secondary); cursor: grab; }
+        .item-flag { font-size: 22px; min-width: 35px; text-align: center; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-name { font-weight: 600; font-size: 14px; }
+        .item-sub { font-size: 11px; color: var(--text-secondary); font-family: monospace; overflow: hidden; text-overflow: ellipsis; }
+        .item-actions { display: flex; gap: 6px; }
+        .item-btn {
+            padding: 6px 10px; border: none; border-radius: 6px;
+            font-size: 11px; cursor: pointer; transition: all 0.2s;
+        }
+        .item-btn-edit { background: rgba(41,151,255,0.15); color: var(--accent-blue); }
+        .item-btn-edit:hover { background: rgba(41,151,255,0.25); }
+        .item-btn-delete { background: rgba(255,69,58,0.15); color: var(--accent-red); }
+        .item-btn-delete:hover { background: rgba(255,69,58,0.25); }
+        .item-row.dragging { opacity: 0.5; }
+
+        /* Form */
+        .form-row { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        .form-input {
+            padding: 10px 12px; background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text-primary); font-size: 13px; outline: none; flex: 1; min-width: 100px;
+        }
+        .form-input:focus { border-color: var(--accent-blue); }
+        .form-input::placeholder { color: var(--text-secondary); }
+        .form-input-small { max-width: 70px; text-align: center; }
+
+        /* Ping Settings */
+        .ping-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+        .ping-level {
+            display: flex; align-items: center; gap: 10px; padding: 12px;
+            background: rgba(255,255,255,0.02); border-radius: 10px;
+        }
+        .ping-bars { display: flex; gap: 2px; align-items: flex-end; height: 20px; }
+        .ping-bar { width: 5px; border-radius: 2px; }
+        .ping-bar.on-green { background: var(--accent-green); }
+        .ping-bar.on-bright { background: #00ff66; box-shadow: 0 0 6px #00ff66; }
+        .ping-bar.on-yellow { background: var(--accent-yellow); }
+        .ping-bar.on-red { background: var(--accent-red); }
+        .ping-bar.off { background: rgba(255,255,255,0.15); }
+        .ping-info { flex: 1; }
+        .ping-title { font-size: 13px; font-weight: 600; }
+        .ping-desc { font-size: 11px; color: var(--text-secondary); }
+        .ping-input {
+            width: 70px; padding: 6px 10px; background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text-primary); font-size: 13px; text-align: center;
+        }
+
+        /* Modal */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .modal.visible { display: flex; }
+        .modal-box { background: #1a1a1a; border-radius: 16px; padding: 24px; max-width: 450px; width: 100%; }
+        .modal-icon { font-size: 36px; text-align: center; margin-bottom: 12px; }
+        .modal-title { font-size: 18px; font-weight: 600; text-align: center; margin-bottom: 6px; }
+        .modal-text { font-size: 13px; color: var(--text-secondary); text-align: center; margin-bottom: 16px; }
+        .modal-form { display: flex; flex-direction: column; gap: 10px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
+            background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px 20px; font-size: 13px; display: flex; align-items: center; gap: 8px;
+            opacity: 0; transition: all 0.3s; z-index: 3000;
+        }
+        .toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; }
+            .form-input { min-width: auto; }
+            .item-row { flex-wrap: wrap; }
+            .item-actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
+            .ping-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div class="login-icon">🔐</div>
+            <h1 class="login-title">Админ-панель</h1>
+            <p class="login-subtitle">Введите пароль</p>
+            <input type="password" class="login-input" id="passwordInput" placeholder="Пароль" autofocus>
+            <button class="login-btn" onclick="login()">Войти</button>
+            <p class="login-error" id="loginError">Неверный пароль</p>
+        </div>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+        <div class="header">
+            <h1 class="header-title">📊 FastCon</h1>
+            <div class="header-actions">
+                <button class="btn btn-outline" onclick="loadStats()">🔄 Обновить</button>
+                <button class="btn btn-danger" onclick="showModal('resetModal')">🗑 Сброс</button>
+                <a href="/" class="btn btn-outline">← Сайт</a>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Всего</div><div class="stat-value blue" id="totalVisits">0</div></div>
+            <div class="stat-card"><div class="stat-label">Уникальных</div><div class="stat-value green" id="uniqueVisitors">0</div></div>
+            <div class="stat-card"><div class="stat-label">Сегодня</div><div class="stat-value purple" id="todayVisits">0</div></div>
+            <div class="stat-card"><div class="stat-label">Сегодня унік</div><div class="stat-value yellow" id="todayUnique">0</div></div>
+        </div>
+
+        <div class="section">
+            <div class="section-header"><h2 class="section-title">📈 7 дней</h2></div>
+            <div class="chart-container" id="chartContainer"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-header"><h2 class="section-title">👆 Клики</h2></div>
+            <div id="clicksTable"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">🔗 Кнопки</h2>
+                <span style="font-size: 11px; color: var(--text-secondary);">Перетащите для сортировки</span>
+            </div>
+            <div id="buttonsList"></div>
+            <div class="form-row">
+                <input type="text" class="form-input" id="newButtonIcon" placeholder="🔗" maxlength="2" style="max-width:60px;text-align:center">
+                <input type="text" class="form-input" id="newButtonLabel" placeholder="Название кнопки">
+                <input type="text" class="form-input" id="newButtonUrl" placeholder="URL ссылки">
+                <button class="btn btn-primary" onclick="addButton()">+ Добавить</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">🖥 Серверы</h2>
+                <span style="font-size: 11px; color: var(--text-secondary);">Перетащите для сортировки</span>
+            </div>
+            <div id="serversList"></div>
+            <div class="form-row">
+                <input type="text" class="form-input" id="newServerName" placeholder="Название">
+                <input type="text" class="form-input" id="newServerHost" placeholder="IP/hostname">
+                <input type="text" class="form-input form-input-small" id="newServerCountry" placeholder="DE" maxlength="2" style="text-transform:uppercase">
+                <button class="btn btn-primary" onclick="addServer()">+ Добавить</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">📡 Настройки пинга</h2>
+                <button class="btn btn-success btn-small" onclick="savePingSettings()">💾 Сохранить</button>
+            </div>
+            <div style="margin-bottom: 16px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 10px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <span style="font-size: 14px; font-weight: 600;">Режим пинга:</span>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="radio" name="pingMode" value="icmp" id="modeIcmp" checked> 
+                    <span>ICMP (стандартный)</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="radio" name="pingMode" value="tcp" id="modeTcp"> 
+                    <span>TCP</span>
+                </label>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span>Порт:</span>
+                    <input type="number" class="ping-input" id="tcpPort" value="443" style="width: 70px;">
+                </div>
+            </div>
+            <div class="ping-grid">
+                <div class="ping-level">
+                    <div class="ping-bars">
+                        <div class="ping-bar on-bright" style="height:5px"></div>
+                        <div class="ping-bar on-bright" style="height:9px"></div>
+                        <div class="ping-bar on-bright" style="height:13px"></div>
+                        <div class="ping-bar on-bright" style="height:17px"></div>
+                    </div>
+                    <div class="ping-info"><div class="ping-title">4 полоски</div><div class="ping-desc">Отлично</div></div>
+                    <span>&lt;</span><input type="number" class="ping-input" id="pingLevel4" value="50"><span>ms</span>
+                </div>
+                <div class="ping-level">
+                    <div class="ping-bars">
+                        <div class="ping-bar on-green" style="height:5px"></div>
+                        <div class="ping-bar on-green" style="height:9px"></div>
+                        <div class="ping-bar on-green" style="height:13px"></div>
+                        <div class="ping-bar off" style="height:17px"></div>
+                    </div>
+                    <div class="ping-info"><div class="ping-title">3 полоски</div><div class="ping-desc">Хорошо</div></div>
+                    <span>&lt;</span><input type="number" class="ping-input" id="pingLevel3" value="100"><span>ms</span>
+                </div>
+                <div class="ping-level">
+                    <div class="ping-bars">
+                        <div class="ping-bar on-yellow" style="height:5px"></div>
+                        <div class="ping-bar on-yellow" style="height:9px"></div>
+                        <div class="ping-bar off" style="height:13px"></div>
+                        <div class="ping-bar off" style="height:17px"></div>
+                    </div>
+                    <div class="ping-info"><div class="ping-title">2 полоски</div><div class="ping-desc">Средне</div></div>
+                    <span>&lt;</span><input type="number" class="ping-input" id="pingLevel2" value="200"><span>ms</span>
+                </div>
+                <div class="ping-level">
+                    <div class="ping-bars">
+                        <div class="ping-bar on-red" style="height:5px"></div>
+                        <div class="ping-bar off" style="height:9px"></div>
+                        <div class="ping-bar off" style="height:13px"></div>
+                        <div class="ping-bar off" style="height:17px"></div>
+                    </div>
+                    <div class="ping-info"><div class="ping-title">1 полоска</div><div class="ping-desc">Плохо</div></div>
+                    <span>&lt;</span><input type="number" class="ping-input" id="pingLevel1" value="500"><span>ms</span>
+                </div>
+            </div>
+            <p style="margin-top:10px;font-size:11px;color:var(--text-secondary)">≥ значения "1 полоска" = Offline (0 полосок)</p>
+            
+            <!-- Retry Settings -->
+            <div style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 10px;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">🔄 Повторные попытки при неудаче:</div>
+                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>Попыток:</span>
+                        <input type="number" class="ping-input" id="retryCount" value="3" min="1" max="10" style="width: 60px;">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span>Пауза:</span>
+                        <input type="number" class="ping-input" id="retryDelay" value="1000" min="500" max="5000" step="500" style="width: 80px;">
+                        <span>ms</span>
+                    </div>
+                </div>
+                <p style="margin-top:8px;font-size:11px;color:var(--text-secondary)">Сервер будет отправлять указанное количество попыток с паузой между ними, прежде чем показать "offline"</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <p style="color:var(--text-secondary);font-size:12px">Последний сброс: <span id="lastReset">—</span></p>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="resetModal">
+        <div class="modal-box">
+            <div class="modal-icon">⚠️</div>
+            <h2 class="modal-title">Сбросить статистику?</h2>
+            <p class="modal-text">Все данные посещений и кликов будут удалены.</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="hideModal('resetModal')">Отмена</button>
+                <button class="btn btn-danger" onclick="resetStats()">Сбросить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editServerModal">
+        <div class="modal-box">
+            <div class="modal-icon">🖥</div>
+            <h2 class="modal-title">Редактировать сервер</h2>
+            <div class="modal-form">
+                <input type="hidden" id="editServerId">
+                <input type="text" class="form-input" id="editServerName" placeholder="Название">
+                <input type="text" class="form-input" id="editServerHost" placeholder="IP/hostname">
+                <input type="text" class="form-input" id="editServerCountry" placeholder="DE" maxlength="2" style="text-transform:uppercase;max-width:80px">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="hideModal('editServerModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="saveServer()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editButtonModal">
+        <div class="modal-box">
+            <div class="modal-icon" id="editButtonIcon">🔗</div>
+            <h2 class="modal-title">Редактировать кнопку</h2>
+            <div class="modal-form">
+                <input type="hidden" id="editButtonId">
+                <input type="text" class="form-input" id="editButtonLabel" placeholder="Название">
+                <input type="text" class="form-input" id="editButtonUrl" placeholder="URL ссылки">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="hideModal('editButtonModal')">Отмена</button>
+                <button class="btn btn-primary" onclick="saveButton()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><span id="toastIcon">✓</span><span id="toastText">OK</span></div>
+
+    <script>
+        let adminPassword = '', data = {};
+
+        document.getElementById('passwordInput').addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+
+        async function login() {
+            const pwd = document.getElementById('passwordInput').value;
+            try {
+                const res = await fetch('/api/admin/stats', { headers: { 'X-Admin-Password': pwd } });
+                if (res.ok) {
+                    adminPassword = pwd;
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('dashboard').classList.add('visible');
+                    loadStats();
+                } else {
+                    document.getElementById('loginError').style.display = 'block';
+                }
+            } catch (e) { toast('❌', 'Ошибка'); }
+        }
+
+        async function api(url, method = 'GET', body = null) {
+            const opt = { method, headers: { 'X-Admin-Password': adminPassword, 'Content-Type': 'application/json' } };
+            if (body) opt.body = JSON.stringify(body);
+            return (await fetch(url, opt)).json();
+        }
+
+        async function loadStats() {
+            try {
+                data = await api('/api/admin/stats');
+                document.getElementById('totalVisits').textContent = data.visits.total.toLocaleString();
+                document.getElementById('uniqueVisitors').textContent = data.visits.unique.toLocaleString();
+                document.getElementById('todayVisits').textContent = data.visits.today.toLocaleString();
+                document.getElementById('todayUnique').textContent = data.visits.todayUnique.toLocaleString();
+                renderChart(data.visits.last7Days);
+                renderClicks(data.clicks);
+                renderButtons(data.buttons || {});
+                renderServers(data.servers);
+                if (data.pingSettings) {
+                    document.getElementById('pingLevel4').value = data.pingSettings.level4;
+                    document.getElementById('pingLevel3').value = data.pingSettings.level3;
+                    document.getElementById('pingLevel2').value = data.pingSettings.level2;
+                    document.getElementById('pingLevel1').value = data.pingSettings.level1;
+                    // Load mode
+                    if (data.pingSettings.mode === 'tcp') {
+                        document.getElementById('modeTcp').checked = true;
+                    } else {
+                        document.getElementById('modeIcmp').checked = true;
+                    }
+                    document.getElementById('tcpPort').value = data.pingSettings.tcpPort || 443;
+                    // Load retry settings
+                    document.getElementById('retryCount').value = data.pingSettings.retryCount || 3;
+                    document.getElementById('retryDelay').value = data.pingSettings.retryDelay || 1000;
+                }
+                document.getElementById('lastReset').textContent = new Date(data.lastReset).toLocaleString('ru');
+            } catch (e) { toast('❌', 'Ошибка загрузки'); }
+        }
+
+        function renderChart(days) {
+            const max = Math.max(...days.map(d => d.visits), 1);
+            document.getElementById('chartContainer').innerHTML = days.map(d => {
+                const h = (d.visits / max) * 120;
+                const dt = new Date(d.date);
+                return `<div class="chart-bar-wrapper"><div class="chart-bar" style="height:${Math.max(h,4)}px"><span class="chart-bar-value">${d.visits}</span></div><span class="chart-label">${dt.getDate()}/${dt.getMonth()+1}</span></div>`;
+            }).join('');
+        }
+
+        function renderClicks(clicks) {
+            const btnArray = Array.isArray(data.buttons) ? data.buttons : Object.entries(data.buttons || {}).map(([id, b]) => ({ id, ...b }));
+            document.getElementById('clicksTable').innerHTML = Object.entries(clicks).map(([k, v]) => {
+                const b = btnArray.find(x => x.id === k) || { icon: '❓', label: k };
+                return `<div class="click-row"><div class="click-name"><span class="click-icon">${b.icon}</span><span class="click-label">${b.label}</span></div><span class="click-count">${v}</span></div>`;
+            }).join('');
+        }
+
+        function renderButtons(buttons) {
+            const container = document.getElementById('buttonsList');
+            const btnArray = Array.isArray(buttons) ? buttons : Object.entries(buttons).map(([id, b]) => ({ id, ...b }));
+            container.innerHTML = btnArray.map(b =>
+                `<div class="item-row" draggable="true" data-btn-id="${b.id}" ondragstart="dragStartBtn(event)" ondragover="dragOverBtn(event)" ondrop="dropBtn(event)" ondragend="dragEndBtn()">
+                    <span class="item-drag">⋮⋮</span>
+                    <span class="item-flag">${b.icon}</span>
+                    <div class="item-info"><div class="item-name">${b.label}</div><div class="item-sub">${b.url}</div></div>
+                    <div class="item-actions">
+                        <button class="item-btn item-btn-edit" onclick="editButton('${b.id}')">✏️</button>
+                        <button class="item-btn item-btn-delete" onclick="deleteButton('${b.id}')">🗑</button>
+                    </div>
+                </div>`
+            ).join('');
+        }
+
+        // Button drag & drop
+        let draggedBtn = null;
+
+        function dragStartBtn(e) { draggedBtn = e.target; e.target.classList.add('dragging'); }
+        function dragOverBtn(e) {
+            e.preventDefault();
+            const t = e.target.closest('.item-row[data-btn-id]');
+            if (t && t !== draggedBtn) {
+                const list = document.getElementById('buttonsList');
+                const items = [...list.querySelectorAll('.item-row[data-btn-id]')];
+                items.indexOf(draggedBtn) < items.indexOf(t) ? t.after(draggedBtn) : t.before(draggedBtn);
+            }
+        }
+        function dropBtn(e) { e.preventDefault(); }
+        async function dragEndBtn() {
+            if (draggedBtn) {
+                draggedBtn.classList.remove('dragging');
+                const order = [...document.querySelectorAll('#buttonsList .item-row[data-btn-id]')].map(el => el.dataset.btnId);
+                await api('/api/admin/buttons/reorder', 'POST', { order });
+                draggedBtn = null; toast('✓', 'Порядок сохранён');
+            }
+        }
+
+        function editButton(id) {
+            const btnArray = Array.isArray(data.buttons) ? data.buttons : Object.entries(data.buttons).map(([k, b]) => ({ id: k, ...b }));
+            const b = btnArray.find(x => x.id === id); if (!b) return;
+            document.getElementById('editButtonId').value = id;
+            document.getElementById('editButtonIcon').textContent = b.icon;
+            document.getElementById('editButtonLabel').value = b.label;
+            document.getElementById('editButtonUrl').value = b.url;
+            showModal('editButtonModal');
+        }
+
+        async function saveButton() {
+            const id = document.getElementById('editButtonId').value;
+            const label = document.getElementById('editButtonLabel').value.trim();
+            const url = document.getElementById('editButtonUrl').value.trim();
+            if (!label || !url) return toast('❌', 'Заполните поля');
+            await api(`/api/admin/buttons/${id}`, 'PUT', { label, url });
+            hideModal('editButtonModal'); loadStats(); toast('✓', 'Сохранено');
+        }
+
+        async function addButton() {
+            const icon = document.getElementById('newButtonIcon').value.trim() || '🔗';
+            const label = document.getElementById('newButtonLabel').value.trim();
+            const url = document.getElementById('newButtonUrl').value.trim();
+            if (!label || !url) return toast('❌', 'Заполните название и URL');
+            await api('/api/admin/buttons', 'POST', { icon, label, url });
+            document.getElementById('newButtonIcon').value = '';
+            document.getElementById('newButtonLabel').value = '';
+            document.getElementById('newButtonUrl').value = '';
+            loadStats(); toast('✓', 'Кнопка добавлена');
+        }
+
+        async function deleteButton(id) {
+            if (!confirm('Удалить кнопку?')) return;
+            await api(`/api/admin/buttons/${id}`, 'DELETE');
+            loadStats(); toast('✓', 'Удалено');
+        }
+
+        // Servers
+        let dragged = null;
+
+        function renderServers(servers) {
+            document.getElementById('serversList').innerHTML = servers.map(s =>
+                `<div class="item-row" draggable="true" data-id="${s.id}" ondragstart="dragStart(event)" ondragover="dragOver(event)" ondrop="drop(event)" ondragend="dragEnd()">
+                    <span class="item-drag">⋮⋮</span>
+                    <span class="item-flag">${getFlag(s.country)}</span>
+                    <div class="item-info"><div class="item-name">${s.name}</div><div class="item-sub">${s.host}</div></div>
+                    <div class="item-actions">
+                        <button class="item-btn item-btn-edit" onclick="editServer(${s.id})">✏️</button>
+                        <button class="item-btn item-btn-delete" onclick="deleteServer(${s.id})">🗑</button>
+                    </div>
+                </div>`
+            ).join('');
+        }
+
+        function getFlag(c) {
+            if (!c || c.length !== 2) return '🌐';
+            return String.fromCodePoint(...c.toUpperCase().split('').map(x => x.charCodeAt(0) + 127397));
+        }
+
+        function dragStart(e) { dragged = e.target; e.target.classList.add('dragging'); }
+        function dragOver(e) {
+            e.preventDefault();
+            const t = e.target.closest('.item-row');
+            if (t && t !== dragged) {
+                const list = document.getElementById('serversList');
+                const items = [...list.querySelectorAll('.item-row')];
+                items.indexOf(dragged) < items.indexOf(t) ? t.after(dragged) : t.before(dragged);
+            }
+        }
+        function drop(e) { e.preventDefault(); }
+        async function dragEnd() {
+            if (dragged) {
+                dragged.classList.remove('dragging');
+                const order = [...document.querySelectorAll('#serversList .item-row')].map(el => parseInt(el.dataset.id));
+                await api('/api/admin/servers/reorder', 'POST', { order });
+                dragged = null; toast('✓', 'Порядок сохранён');
+            }
+        }
+
+        function editServer(id) {
+            const s = data.servers.find(x => x.id === id); if (!s) return;
+            document.getElementById('editServerId').value = id;
+            document.getElementById('editServerName').value = s.name;
+            document.getElementById('editServerHost').value = s.host;
+            document.getElementById('editServerCountry').value = s.country || '';
+            showModal('editServerModal');
+        }
+
+        async function saveServer() {
+            const id = document.getElementById('editServerId').value;
+            const name = document.getElementById('editServerName').value.trim();
+            const host = document.getElementById('editServerHost').value.trim();
+            const country = document.getElementById('editServerCountry').value.trim().toUpperCase();
+            if (!name || !host) return toast('❌', 'Заполните поля');
+            await api(`/api/admin/servers/${id}`, 'PUT', { name, host, country });
+            hideModal('editServerModal'); loadStats(); toast('✓', 'Сохранено');
+        }
+
+        async function addServer() {
+            const name = document.getElementById('newServerName').value.trim();
+            const host = document.getElementById('newServerHost').value.trim();
+            const country = document.getElementById('newServerCountry').value.trim().toUpperCase() || 'XX';
+            if (!name || !host) return toast('❌', 'Заполните поля');
+            await api('/api/admin/servers', 'POST', { name, host, country });
+            document.getElementById('newServerName').value = '';
+            document.getElementById('newServerHost').value = '';
+            document.getElementById('newServerCountry').value = '';
+            loadStats(); toast('✓', 'Добавлено');
+        }
+
+        async function deleteServer(id) {
+            if (!confirm('Удалить сервер?')) return;
+            await api(`/api/admin/servers/${id}`, 'DELETE');
+            loadStats(); toast('✓', 'Удалено');
+        }
+
+        // Ping
+        async function savePingSettings() {
+            const level4 = +document.getElementById('pingLevel4').value;
+            const level3 = +document.getElementById('pingLevel3').value;
+            const level2 = +document.getElementById('pingLevel2').value;
+            const level1 = +document.getElementById('pingLevel1').value;
+            const mode = document.getElementById('modeTcp').checked ? 'tcp' : 'icmp';
+            const tcpPort = +document.getElementById('tcpPort').value || 443;
+            const retryCount = +document.getElementById('retryCount').value || 3;
+            const retryDelay = +document.getElementById('retryDelay').value || 1000;
+            await api('/api/admin/ping-settings', 'PUT', { level4, level3, level2, level1, mode, tcpPort, retryCount, retryDelay });
+            toast('✓', 'Настройки сохранены');
+        }
+
+        // Reset
+        async function resetStats() {
+            await api('/api/admin/reset', 'POST');
+            hideModal('resetModal'); loadStats(); toast('✓', 'Сброшено');
+        }
+
+        // Modals & Toast
+        function showModal(id) { document.getElementById(id).classList.add('visible'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('visible'); }
+        function toast(icon, text) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastIcon').textContent = icon;
+            document.getElementById('toastText').textContent = text;
+            t.classList.add('visible');
+            setTimeout(() => t.classList.remove('visible'), 2500);
+        }
+    </script>
+</body>
+</html>
